@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J.A.R.V.I.S</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #030805;
+      --bg2: #060d08;
+      --bg3: #0a150c;
+      --bg4: #0f1e10;
+      --primary: #c8ff5a;
+      --accent: #7fff00;
+      --text: #d9ffb8;
+      --text2: #a8d87a;
+      --text3: #5a7a45;
+      --green: #00ff88;
+      --red: #ff3355;
+      --yellow: #ffcc00;
+      --orange: #ff8800;
+      --glow: 0 0 10px rgba(200, 255, 90, 0.5), 0 0 25px rgba(200, 255, 90, 0.15);
+      --glow-sm: 0 0 5px rgba(200, 255, 90, 0.4);
+      --border: rgba(200, 255, 90, 0.22);
+      --border2: rgba(200, 255, 90, 0.09);
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: transparent;
+      font-family: 'Rajdhani', sans-serif;
+      color: var(--text);
+      user-select: none;
+    }
+
+    #shell {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border: 1px solid var(--primary);
+      border-radius: 6px;
+      box-shadow: var(--glow), inset 0 0 80px rgba(0, 40, 120, 0.06);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      animation: boot-in 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes boot-in {
+      from { opacity: 0; transform: scale(0.96) translateY(10px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    #shell::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      background: repeating-linear-gradient(0deg,
+          rgba(0, 207, 255, 0.012) 0px, rgba(0, 207, 255, 0.012) 1px,
+          transparent 1px, transparent 3px);
+    }
+
+    .corner { position: absolute; width: 20px; height: 20px; z-index: 10; }
+    .corner.tl { top: 5px; left: 5px; border-top: 2px solid var(--primary); border-left: 2px solid var(--primary); }
+    .corner.tr { top: 5px; right: 5px; border-top: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+    .corner.bl { bottom: 5px; left: 5px; border-bottom: 2px solid var(--primary); border-left: 2px solid var(--primary); }
+    .corner.br { bottom: 5px; right: 5px; border-bottom: 2px solid var(--primary); border-right: 2px solid var(--primary); }
+
+    #header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 9px 18px 8px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0, 50, 120, 0.1) 0%, transparent 100%);
+      -webkit-app-region: drag; flex-shrink: 0;
+    }
+    #hdr-left { display: flex; align-items: center; gap: 10px; -webkit-app-region: no-drag; }
+    #logo { font-family: 'Orbitron', monospace; font-size: 15px; font-weight: 900; color: var(--primary); text-shadow: var(--glow); letter-spacing: 3px; }
+    #status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: pulse-dot 2.5s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    #backend-badge { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1px; border: 1px solid var(--border2); border-radius: 2px; padding: 1px 5px; }
+    #hdr-right { display: flex; align-items: center; gap: 12px; -webkit-app-region: no-drag; }
+    .hdr-stat { display: flex; flex-direction: column; align-items: flex-end; }
+    .hdr-stat-val { font-family: 'Orbitron', monospace; font-size: 11px; color: var(--primary); }
+    .hdr-stat-lbl { font-family: 'Share Tech Mono', monospace; font-size: 8px; color: var(--text3); letter-spacing: 1px; }
+    .hdr-btn { background: none; border: 1px solid var(--border); color: var(--text3); width: 22px; height: 22px; border-radius: 2px; cursor: pointer; font-size: 11px; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+    .hdr-btn:hover { border-color: var(--primary); color: var(--primary); box-shadow: var(--glow-sm); }
+    #close-btn:hover { border-color: var(--red); color: var(--red); box-shadow: 0 0 6px var(--red); }
+
+    #viz-wrap { display: flex; align-items: flex-start; justify-content: center; gap: 8px; padding: 10px 12px 4px; position: relative; flex-shrink: 0; }
+    #deck-left { display: flex; flex-direction: column; gap: 6px; width: 76px; flex-shrink: 0; padding-top: 6px; }
+    .hex-shape { width: 64px; height: 50px; background: rgba(200, 255, 90, 0.05); border: 1px solid var(--border); clip-path: polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; }
+    .hex-label { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--text3); letter-spacing: 1px; }
+    .hex-val { font-family: 'Orbitron', monospace; font-size: 10px; color: var(--primary); text-shadow: var(--glow-sm); }
+    #mini-search-sim { margin-top: 4px; display: flex; align-items: center; gap: 4px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 10px; padding: 4px 7px; }
+    #mini-search-g { color: var(--primary); font-weight: 700; font-size: 9px; font-family: 'Orbitron', monospace; }
+    #mini-search-ph { font-size: 7px; color: var(--text3); font-family: 'Share Tech Mono', monospace; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    #deck-center { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+    #waveform-canvas { width: 190px; height: 190px; }
+    #viz-status { font-family: 'Orbitron', monospace; font-size: 9px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-top: -6px; text-align: center; }
+    #viz-time { position: absolute; top: 95px; left: 50%; transform: translate(-50%, -50%); font-family: 'Orbitron', monospace; font-size: 13px; font-weight: 700; color: var(--primary); text-shadow: var(--glow-sm); text-align: center; pointer-events: none; }
+    #viz-time-sub { font-size: 8px; color: var(--text3); letter-spacing: 1px; margin-top: 2px; }
+    #deck-right { width: 150px; flex-shrink: 0; display: flex; flex-direction: column; gap: 5px; padding-top: 6px; }
+    #deck-right-title { font-family: 'Share Tech Mono', monospace; font-size: 7px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; border-bottom: 1px solid var(--border2); padding-bottom: 3px; }
+    #deck-right-scroll { height: 150px; overflow: hidden; position: relative; }
+    #deck-right-scroll-inner { animation: text-scroll-up 16s linear infinite; font-size: 8.5px; line-height: 1.6; color: var(--text2); }
+    #deck-right-scroll-inner p { margin-bottom: 6px; }
+    @keyframes text-scroll-up { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+
+    #hud-row { display: flex; gap: 6px; padding: 0 14px 8px; flex-shrink: 0; }
+    .hud-card { flex: 1; background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px; padding: 5px 9px; display: flex; flex-direction: column; gap: 1px; transition: border-color 0.3s; }
+    .hud-card:hover { border-color: var(--border); }
+    .hud-lbl { font-size: 8px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; font-family: 'Share Tech Mono', monospace; }
+    .hud-val { font-size: 14px; font-weight: 700; color: var(--primary); font-family: 'Orbitron', monospace; text-shadow: var(--glow-sm); }
+    .hud-sub { font-size: 9px; color: var(--text3); }
+    .hud-bar { height: 2px; background: var(--bg4); border-radius: 1px; margin-top: 3px; overflow: hidden; }
+    .hud-bar-fill { height: 100%; background: var(--primary); border-radius: 1px; transition: width 0.6s ease; box-shadow: 0 0 4px var(--primary); }
+    .hud-bar-fill.warn { background: var(--yellow); }
+    .hud-bar-fill.danger { background: var(--red); }
+    .divider { height: 1px; margin: 0 14px; background: linear-gradient(90deg, transparent, var(--border), transparent); flex-shrink: 0; }
+
+    #tabs { display: flex; gap: 0; padding: 0 14px; flex-shrink: 0; border-bottom: 1px solid var(--border2); }
+    .tab { font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 1px; padding: 6px 14px; color: var(--text3); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; text-transform: uppercase; }
+    .tab:hover { color: var(--text2); }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); text-shadow: var(--glow-sm); }
+
+    .panel { display: none; flex: 1; overflow: hidden; flex-direction: column; min-height: 0; }
+    .panel.active { display: flex; }
+
+    #chat-log { flex: 1; overflow-y: auto; padding: 10px 14px; display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+    #chat-log::-webkit-scrollbar { width: 3px; }
+    #chat-log::-webkit-scrollbar-track { background: transparent; }
+    #chat-log::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .chat-msg { display: flex; gap: 8px; align-items: flex-start; animation: msg-in 0.22s ease-out; }
+    @keyframes msg-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    .chat-role { font-family: 'Orbitron', monospace; font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase; padding-top: 3px; flex-shrink: 0; width: 48px; }
+    .chat-role.jarvis { color: var(--primary); text-shadow: var(--glow-sm); }
+    .chat-role.sir { color: var(--text3); }
+    .chat-bubble { font-size: 13px; line-height: 1.55; color: var(--text); flex: 1; }
+    .chat-bubble.user-bubble { color: var(--text2); }
+    .chat-ts { font-size: 9px; color: var(--text3); font-family: 'Share Tech Mono', monospace; padding-top: 4px; flex-shrink: 0; }
+    .typing-cursor::after { content: '▋'; color: var(--primary); animation: blink 0.7s step-end infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    #tasks-panel { padding: 10px 14px; gap: 8px; }
+    #task-add-row { display: flex; gap: 6px; flex-shrink: 0; }
+    #task-input { flex: 1; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 6px 10px; color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 13px; outline: none; }
+    #task-input:focus { border-color: var(--primary); }
+    #task-input::placeholder { color: var(--text3); }
+    #task-add-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--primary); border-radius: 3px; padding: 6px 12px; cursor: pointer; font-size: 12px; font-family: 'Share Tech Mono', monospace; transition: all 0.2s; }
+    #task-add-btn:hover { border-color: var(--primary); box-shadow: var(--glow-sm); }
+    #task-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; }
+    #task-list::-webkit-scrollbar { width: 3px; }
+    #task-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .task-item { display: flex; align-items: center; gap: 8px; background: var(--bg3); border: 1px solid var(--border2); border-radius: 3px; padding: 7px 10px; transition: all 0.2s; }
+    .task-item:hover { border-color: var(--border); }
+    .task-check { width: 14px; height: 14px; border: 1px solid var(--text3); border-radius: 2px; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; transition: all 0.2s; }
+    .task-check:hover { border-color: var(--green); color: var(--green); }
+    .task-check.done { background: var(--green); border-color: var(--green); color: var(--bg); }
+    .task-title { flex: 1; font-size: 13px; color: var(--text); }
+    .task-title.done { text-decoration: line-through; color: var(--text3); }
+    .task-del { color: var(--text3); cursor: pointer; font-size: 11px; transition: color 0.15s; }
+    .task-del:hover { color: var(--red); }
+    #tasks-empty { color: var(--text3); font-size: 12px; font-family: 'Share Tech Mono', monospace; text-align: center; padding: 20px 0; letter-spacing: 1px; }
+
+    #stats-panel { padding: 10px 14px; gap: 8px; overflow-y: auto; }
+    .stat-section { flex-shrink: 0; }
+    .stat-section-title { font-family: 'Share Tech Mono', monospace; font-size: 9px; color: var(--text3); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; padding-bottom: 3px; border-bottom: 1px solid var(--border2); }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 4px 0; }
+    .stat-row-lbl { font-size: 12px; color: var(--text2); }
+    .stat-row-val { font-family: 'Share Tech Mono', monospace; font-size: 12px; color: var(--primary); }
+    .stat-bar-wrap { height: 3px; background: var(--bg4); border-radius: 2px; margin-top: 2px; overflow: hidden; }
+    .stat-bar { height: 100%; background: var(--primary); border-radius: 2px; transition: width 0.8s ease; }
+    .stat-bar.warn { background: var(--yellow); }
+    .stat-bar.danger { background: var(--red); }
+
+    #audit-panel { padding: 8px 14px; overflow-y: auto; gap: 4px; }
+    #audit-panel::-webkit-scrollbar { width: 3px; }
+    #audit-panel::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    .audit-item { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; border-bottom: 1px solid var(--border2); font-size: 11px; }
+    .audit-time { color: var(--text3); font-family: 'Share Tech Mono', monospace; flex-shrink: 0; }
+    .audit-action { color: var(--primary); flex-shrink: 0; min-width: 90px; }
+    .audit-cmd { color: var(--text2); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .audit-ok { color: var(--green); flex-shrink: 0; }
+    .audit-err { color: var(--red); flex-shrink: 0; }
+
+    #stock-ticker-wrap { overflow: hidden; flex-shrink: 0; background: rgba(0, 15, 30, 0.5); border-top: 1px solid var(--border2); border-bottom: 1px solid var(--border2); }
+    #stock-ticker { display: flex; gap: 24px; padding: 5px 14px; animation: ticker-scroll 30s linear infinite; width: max-content; }
+    #stock-ticker:hover { animation-play-state: paused; }
+    @keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    .st-item { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .st-sym { font-family: 'Orbitron', monospace; font-size: 9px; color: var(--text2); letter-spacing: 1px; }
+    .st-price { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--primary); }
+    .st-chg { font-size: 10px; font-family: 'Share Tech Mono', monospace; }
+    .st-chg.up { color: var(--green); }
+    .st-chg.down { color: var(--red); }
+    .st-chg.flat { color: var(--text3); }
+    .st-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--border); }
+
+    /* ── Input (voice-primary) ──────────────────────────────── */
+    #input-area { display: flex; align-items: center; gap: 6px; padding: 9px 14px; border-top: 1px solid var(--border); background: linear-gradient(0deg, rgba(0, 30, 60, 0.12) 0%, transparent 100%); flex-shrink: 0; }
+    #mic-primary-wrap { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    #mic-primary-wrap.hidden { display: none; }
+    #mic-passive-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--primary); box-shadow: 0 0 8px var(--primary); animation: pulse-dot 2.5s ease-in-out infinite; flex-shrink: 0; }
+    #mic-hint { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; }
+    #cmd-input-wrap { flex: 1; display: none; }
+    #cmd-input-wrap.open { display: flex; }
+    #cmd-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 8px 12px; color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 14px; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+    #cmd-input::placeholder { color: var(--text3); font-size: 13px; }
+    #cmd-input:focus { border-color: var(--primary); box-shadow: 0 0 0 1px rgba(0, 207, 255, 0.12); }
+    .act-btn { background: var(--bg3); border: 1px solid var(--border); color: var(--text2); border-radius: 3px; cursor: pointer; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-size: 15px; transition: all 0.2s; flex-shrink: 0; }
+    .act-btn:hover { border-color: var(--primary); color: var(--primary); box-shadow: var(--glow-sm); }
+    #keyboard-toggle-btn.active { border-color: var(--primary); color: var(--primary); }
+
+    #now-playing { display: flex; align-items: center; gap: 8px; padding: 5px 14px; font-size: 10px; color: var(--text3); font-family: 'Share Tech Mono', monospace; flex-shrink: 0; background: rgba(0, 8, 18, 0.6); }
+    #np-icon { color: var(--primary); animation: np-pulse 1.5s ease-in-out infinite; }
+    @keyframes np-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+    #np-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #np-net { color: var(--text3); font-size: 9px; letter-spacing: 1px; }
+
+    #settings-overlay { position: absolute; inset: 0; background: rgba(5, 10, 18, 0.96); z-index: 200; display: none; flex-direction: column; padding: 24px; gap: 16px; }
+    #settings-overlay.open { display: flex; }
+    #settings-title { font-family: 'Orbitron', monospace; font-size: 14px; color: var(--primary); letter-spacing: 3px; }
+    .setting-row { display: flex; flex-direction: column; gap: 4px; }
+    .setting-lbl { font-size: 11px; color: var(--text3); letter-spacing: 1px; font-family: 'Share Tech Mono', monospace; }
+    .setting-input { background: var(--bg3); border: 1px solid var(--border); border-radius: 3px; padding: 7px 10px; color: var(--text); font-family: 'Rajdhani', sans-serif; font-size: 13px; outline: none; }
+    .setting-input:focus { border-color: var(--primary); }
+    #settings-save { background: var(--accent); border: none; color: white; border-radius: 3px; padding: 9px 20px; cursor: pointer; font-family: 'Orbitron', monospace; font-size: 11px; letter-spacing: 1px; align-self: flex-start; transition: all 0.2s; }
+    #settings-save:hover { background: var(--primary); color: var(--bg); box-shadow: var(--glow); }
+    #settings-close { position: absolute; top: 16px; right: 18px; background: none; border: 1px solid var(--border); color: var(--text3); width: 24px; height: 24px; border-radius: 2px; cursor: pointer; font-size: 12px; }
+    #settings-close:hover { border-color: var(--red); color: var(--red); }
+
+    #loading { position: absolute; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; z-index: 300; transition: opacity 0.4s; }
+    #loading.hidden { opacity: 0; pointer-events: none; }
+    #boot-logo { font-family: 'Orbitron', monospace; font-size: 32px; font-weight: 900; color: var(--primary); text-shadow: var(--glow); letter-spacing: 8px; }
+    #boot-sub { font-family: 'Share Tech Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 3px; }
+    #boot-msg { font-family: 'Share Tech Mono', monospace; font-size: 11px; color: var(--text3); letter-spacing: 2px; }
+    #boot-bar-wrap { width: 220px; height: 2px; background: var(--bg3); border: 1px solid var(--border); }
+    #boot-bar { height: 100%; width: 0; background: var(--primary); box-shadow: var(--glow); transition: width 0.3s ease; }
+
+    .glitch { animation: glitch 0.35s steps(1) 3; }
+    @keyframes glitch {
+      0% { clip-path: inset(40% 0 61% 0); transform: translate(-2px, 0); filter: hue-rotate(90deg); }
+      25% { clip-path: inset(92% 0 1% 0); transform: translate(2px, 0); }
+      50% { clip-path: inset(25% 0 58% 0); transform: translate(-1px, 0); filter: hue-rotate(-90deg); }
+      75% { clip-path: inset(54% 0 7% 0); transform: translate(1px, 0); }
+      100% { clip-path: inset(58% 0 43% 0); transform: translate(0); filter: none; }
+    }
+
+    #toast { position: absolute; top: 50px; right: 14px; z-index: 500; background: var(--bg3); border: 1px solid var(--primary); border-radius: 3px; padding: 8px 14px; font-size: 12px; color: var(--primary); font-family: 'Share Tech Mono', monospace; letter-spacing: 1px; box-shadow: var(--glow); max-width: 240px; opacity: 0; transform: translateY(-8px); transition: opacity 0.25s, transform 0.25s; pointer-events: none; }
+    #toast.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+
+<body>
+
+  <div id="loading">
+    <div id="boot-logo">J.A.R.V.I.S</div>
+    <div id="boot-sub">JUST A RATHER VERY INTELLIGENT SYSTEM</div>
+    <div id="boot-bar-wrap"><div id="boot-bar"></div></div>
+    <div id="boot-msg">INITIALIZING...</div>
+  </div>
+
+  <div id="toast"></div>
+
+  <div id="settings-overlay">
+    <div id="settings-title">⚙ SETTINGS</div>
+    <div class="setting-row">
+      <div class="setting-lbl">API URL</div>
+      <input id="set-api" class="setting-input" type="text" placeholder="http://127.0.0.1:8765">
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">YOUR NAME (how JARVIS calls you)</div>
+      <input id="set-name" class="setting-input" type="text" placeholder="Sir">
+    </div>
+    <div class="setting-row">
+      <div class="setting-lbl">GEMINI API KEY (shown masked)</div>
+      <input id="set-gemini" class="setting-input" type="password" placeholder="••••••••••••••••">
+    </div>
+    <button id="settings-save" onclick="saveSettings()">SAVE &amp; APPLY</button>
+    <button id="settings-close" onclick="closeSettings()">✕</button>
+  </div>
+
+  <div id="shell">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+
+    <div id="header">
+      <div id="hdr-left">
+        <div id="logo">J.A.R.V.I.S</div>
+        <div id="status-dot"></div>
+        <div id="backend-badge">OFFLINE</div>
+      </div>
+      <div id="hdr-right">
+        <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-cpu">—%</div><div class="hdr-stat-lbl">CPU</div></div>
+        <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-ram">—%</div><div class="hdr-stat-lbl">RAM</div></div>
+        <div class="hdr-stat"><div class="hdr-stat-val" id="hdr-time">--:--</div><div class="hdr-stat-lbl">TIME</div></div>
+        <button class="hdr-btn" id="min-btn" title="Minimize" onclick="minimizeWindow()">_</button>
+        <button class="hdr-btn" id="max-btn" title="Maximize" onclick="maximizeWindow()">□</button>
+        <button class="hdr-btn" id="settings-btn" title="Settings" onclick="openSettings()">⚙</button>
+        <button class="hdr-btn" id="close-btn" title="Hide" onclick="hideWindow()">✕</button>
+      </div>
+    </div>
+
+    <div id="viz-wrap">
+      <div id="deck-left">
+        <div class="hex-shape">
+          <div class="hex-label">PWR</div>
+          <div class="hex-val" id="hex-pwr">98%</div>
+        </div>
+        <div class="hex-shape">
+          <div class="hex-label">CORE</div>
+          <div class="hex-val" id="hex-core">ON</div>
+        </div>
+        <div class="hex-shape">
+          <div class="hex-label">NET</div>
+          <div class="hex-val" id="hex-net">OK</div>
+        </div>
+        <div id="mini-search-sim">
+          <span id="mini-search-g">G</span>
+          <span id="mini-search-ph">Search JARVIS knowledge...</span>
+        </div>
+      </div>
+
+      <div id="deck-center">
+        <canvas id="waveform-canvas" width="190" height="190"></canvas>
+        <div id="viz-time">
+          <div id="vt-clock">--:--:--</div>
+          <div id="viz-time-sub" id="vt-date">--- -- ----</div>
+        </div>
+        <div id="viz-status">AWAITING VOICE COMMAND...</div>
+      </div>
+
+      <div id="deck-right">
+        <div id="deck-right-title">SYSTEM DIRECTIVES</div>
+        <div id="deck-right-scroll">
+          <div id="deck-right-scroll-inner">
+            <p>Voice-primary interface active. Wake word monitored continuously.</p>
+            <p>Agent loop online. Multi-step reasoning engaged for complex tasks.</p>
+            <p>ChromeOS bridge: server mode, port 8767. Awaiting agent handshake.</p>
+            <p>Web search module linked via Tavily. Ready for external queries.</p>
+            <p>Voice-primary interface active. Wake word monitored continuously.</p>
+            <p>Agent loop online. Multi-step reasoning engaged for complex tasks.</p>
+            <p>ChromeOS bridge: server mode, port 8767. Awaiting agent handshake.</p>
+            <p>Web search module linked via Tavily. Ready for external queries.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div id="hud-row">
+      <div class="hud-card">
+        <div class="hud-lbl">CPU</div>
+        <div class="hud-val" id="card-cpu">—%</div>
+        <div class="hud-sub">i3-6006U</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="bar-cpu" style="width:0%"></div></div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-lbl">RAM</div>
+        <div class="hud-val" id="card-ram">—%</div>
+        <div class="hud-sub" id="card-ram-sub">of 12 GB</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="bar-ram" style="width:0%"></div></div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-lbl">DISK</div>
+        <div class="hud-val" id="card-disk">—%</div>
+        <div class="hud-sub" id="card-disk-sub">C:\ drive</div>
+        <div class="hud-bar"><div class="hud-bar-fill" id="bar-disk" style="width:0%"></div></div>
+      </div>
+      <div class="hud-card">
+        <div class="hud-lbl">DATE</div>
+        <div class="hud-val" id="card-date" style="font-size:10px;padding-top:2px">—</div>
+        <div class="hud-sub" id="card-day">—</div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div id="tabs">
+      <div class="tab active" onclick="switchTab('chat')">CHAT</div>
+      <div class="tab" onclick="switchTab('tasks')">TASKS</div>
+      <div class="tab" onclick="switchTab('stats')">SYSTEM</div>
+      <div class="tab" onclick="switchTab('audit')">LOG</div>
+    </div>
+
+    <div class="panel active" id="panel-chat">
+      <div id="chat-log">
+        <div class="chat-msg">
+          <span class="chat-role jarvis">JARVIS</span>
+          <span class="chat-bubble">Systems online. Awaiting your command, Sir.</span>
+          <span class="chat-ts" id="init-ts"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-tasks">
+      <div id="tasks-panel">
+        <div id="task-add-row">
+          <input id="task-input" type="text" placeholder="Add new task, Sir...">
+          <button id="task-add-btn" onclick="addTaskFromUI()">+ ADD</button>
+        </div>
+        <div id="task-list"><div id="tasks-empty">NO PENDING TASKS</div></div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-stats">
+      <div id="stats-panel">
+        <div class="stat-section">
+          <div class="stat-section-title">PROCESSOR</div>
+          <div class="stat-row"><span class="stat-row-lbl">CPU Usage</span><span class="stat-row-val" id="st-cpu">—</span></div>
+          <div class="stat-bar-wrap"><div class="stat-bar" id="stbar-cpu" style="width:0%"></div></div>
+          <div class="stat-row"><span class="stat-row-lbl">Model</span><span class="stat-row-val">Intel i3-6006U</span></div>
+          <div class="stat-row"><span class="stat-row-lbl">Cores</span><span class="stat-row-val">2C / 4T</span></div>
+        </div>
+        <div class="stat-section">
+          <div class="stat-section-title">MEMORY</div>
+          <div class="stat-row"><span class="stat-row-lbl">RAM Usage</span><span class="stat-row-val" id="st-ram">—</span></div>
+          <div class="stat-bar-wrap"><div class="stat-bar" id="stbar-ram" style="width:0%"></div></div>
+          <div class="stat-row"><span class="stat-row-lbl">Used / Total</span><span class="stat-row-val" id="st-ram-detail">— / —</span></div>
+        </div>
+        <div class="stat-section">
+          <div class="stat-section-title">STORAGE</div>
+          <div class="stat-row"><span class="stat-row-lbl">Disk C:\ Usage</span><span class="stat-row-val" id="st-disk">—</span></div>
+          <div class="stat-bar-wrap"><div class="stat-bar" id="stbar-disk" style="width:0%"></div></div>
+          <div class="stat-row"><span class="stat-row-lbl">Free Space</span><span class="stat-row-val" id="st-disk-free">—</span></div>
+        </div>
+        <div class="stat-section">
+          <div class="stat-section-title">NETWORK</div>
+          <div class="stat-row"><span class="stat-row-lbl">Bytes Sent</span><span class="stat-row-val" id="st-net-sent">—</span></div>
+          <div class="stat-row"><span class="stat-row-lbl">Bytes Recv</span><span class="stat-row-val" id="st-net-recv">—</span></div>
+        </div>
+        <div class="stat-section">
+          <div class="stat-section-title">AI BACKEND</div>
+          <div class="stat-row"><span class="stat-row-lbl">Engine</span><span class="stat-row-val" id="st-backend">—</span></div>
+          <div class="stat-row"><span class="stat-row-lbl">Status</span><span class="stat-row-val" id="st-llm-status">—</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-audit">
+      <div id="audit-panel"></div>
+    </div>
+
+    <div id="stock-ticker-wrap">
+      <div id="stock-ticker">
+        <div class="st-item"><span class="st-sym">RELIANCE</span><span class="st-price" id="tk-rel">—</span><span class="st-chg flat" id="tc-rel">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">TCS</span><span class="st-price" id="tk-tcs">—</span><span class="st-chg flat" id="tc-tcs">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">NIFTY</span><span class="st-price" id="tk-nifty">—</span><span class="st-chg flat" id="tc-nifty">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">SENSEX</span><span class="st-price" id="tk-sensex">—</span><span class="st-chg flat" id="tc-sensex">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">INFY</span><span class="st-price" id="tk-infy">—</span><span class="st-chg flat" id="tc-infy">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">RELIANCE</span><span class="st-price">—</span><span class="st-chg flat">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">TCS</span><span class="st-price">—</span><span class="st-chg flat">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">NIFTY</span><span class="st-price">—</span><span class="st-chg flat">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">SENSEX</span><span class="st-price">—</span><span class="st-chg flat">—</span></div>
+        <div class="st-dot"></div>
+        <div class="st-item"><span class="st-sym">INFY</span><span class="st-price">—</span><span class="st-chg flat">—</span></div>
+      </div>
+    </div>
+
+    <div id="input-area">
+      <div id="mic-primary-wrap">
+        <span id="mic-passive-dot"></span>
+        <span id="mic-hint">PASSIVE LISTENING ACTIVE</span>
+      </div>
+      <div id="cmd-input-wrap">
+        <input id="cmd-input" type="text" placeholder="Enter command, Sir..." autocomplete="off" spellcheck="false">
+      </div>
+      <button class="act-btn" id="send-btn" title="Send" style="display:none">⮕</button>
+      <button class="act-btn" id="keyboard-toggle-btn" title="Type a command instead">⌨</button>
+    </div>
+
+    <div id="now-playing">
+      <span id="np-icon">♪</span>
+      <span id="np-text">No media playing</span>
+      <span id="np-net">NET: — KB/s</span>
+    </div>
+  </div>
+
+  <script>
+    let API_URL = localStorage.getItem('jarvis_api') || 'http://127.0.0.1:8765';
+    let WS_URL = API_URL.replace('http', 'ws') + '/ws';
+
+    let ws = null;
+    let tasks = [];
+    let lastNetSent = 0, lastNetRecv = 0;
+
+    const BOOT_STEPS = [
+      [10, 'LOADING CORE MODULES...'],
+      [25, 'INITIALIZING LLM ENGINE...'],
+      [45, 'CONNECTING TO JARVIS CORE...'],
+      [62, 'CALIBRATING VOICE SYSTEMS...'],
+      [78, 'LOADING MEMORY DATABASE...'],
+      [90, 'ESTABLISHING SECURE LINK...'],
+      [100, 'ALL SYSTEMS NOMINAL — ONLINE'],
+    ];
+
+    async function boot() {
+      document.getElementById('init-ts').textContent = nowTs();
+      const bar = document.getElementById('boot-bar');
+      const msg = document.getElementById('boot-msg');
+      for (const [pct, text] of BOOT_STEPS) {
+        bar.style.width = pct + '%';
+        msg.textContent = text;
+        await sleep(300);
+      }
+      await sleep(350);
+      const ov = document.getElementById('loading');
+      ov.classList.add('hidden');
+      setTimeout(() => ov.remove(), 500);
+      initAll();
+    }
+
+    function initAll() {
+      initWaveform();
+      startClock();
+      bindInput();
+      connectWS();
+      setInterval(fetchStats, 2500);
+      setInterval(fetchTasks, 8000);
+      setInterval(fetchAuditLog, 15000);
+      fetchStats();
+      fetchTasks();
+      fetchAuditLog();
+      fetchHealth();
+    }
+
+    function startClock() {
+      const DAYS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
+      const MONTHS = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      function tick() {
+        const n = new Date();
+        const ts = `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+        document.getElementById('hdr-time').textContent = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+        document.getElementById('vt-clock').textContent = ts;
+        document.getElementById('viz-time-sub').textContent = `${DAYS[n.getDay()]} ${pad(n.getDate())} ${MONTHS[n.getMonth()]}`;
+        document.getElementById('card-date').textContent = `${pad(n.getDate())} ${MONTHS[n.getMonth()]} ${n.getFullYear()}`;
+        document.getElementById('card-day').textContent = DAYS[n.getDay()];
+      }
+      tick(); setInterval(tick, 1000);
+    }
+
+    function connectWS() {
+      try {
+        ws = new WebSocket(WS_URL);
+        ws.onopen = () => {
+          setStatus('ONLINE');
+          document.getElementById('backend-badge').textContent = 'ONLINE';
+          document.getElementById('status-dot').style.background = 'var(--green)';
+        };
+        ws.onmessage = e => {
+          const d = JSON.parse(e.data);
+          if (d.type === 'stats') handleStatsPush(d);
+          else if (d.type === 'notification') showToast(d.message);
+        };
+        ws.onclose = () => {
+          setStatus('RECONNECTING');
+          document.getElementById('backend-badge').textContent = 'OFFLINE';
+          document.getElementById('status-dot').style.background = 'var(--red)';
+          setTimeout(connectWS, 3500);
+        };
+        ws.onerror = () => setStatus('ENGINE OFFLINE');
+      } catch (e) {
+        setStatus('ENGINE OFFLINE');
+        setTimeout(connectWS, 5000);
+      }
+    }
+
+    async function sendCommand(text) {
+      if (!text.trim()) return;
+      document.getElementById('cmd-input').value = '';
+      setStatus('PROCESSING'); startPulse();
+      try {
+        const r = await fetch(`${API_URL}/command`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text, source: 'text' })
+        });
+        if (!r.ok) {
+          showToast('Engine error, Sir. Check that main.py is running.');
+        }
+        // JARVIS speaks the response aloud (handled server-side) —
+        // it is intentionally never displayed as text here.
+      } catch (e) {
+        showToast('Cannot reach JARVIS engine, Sir.');
+      }
+      setStatus('STANDBY'); stopPulse();
+    }
+
+    function appendMsg(role, text, type) {
+      const log = document.getElementById('chat-log');
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      div.innerHTML = `<span class="chat-role ${type}">${role}</span><span class="chat-bubble ${type === 'sir' ? 'user-bubble' : ''}">${esc(text)}</span><span class="chat-ts">${nowTs()}</span>`;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    function typewriter(role, text, type) {
+      const log = document.getElementById('chat-log');
+      const div = document.createElement('div');
+      div.className = 'chat-msg';
+      const bubble = document.createElement('span');
+      bubble.className = 'chat-bubble typing-cursor';
+      div.innerHTML = `<span class="chat-role ${type}">${role}</span>`;
+      div.appendChild(bubble);
+      div.innerHTML += `<span class="chat-ts">${nowTs()}</span>`;
+      div.insertBefore(bubble, div.children[1]);
+      log.appendChild(div);
+      let i = 0;
+      const spd = Math.max(10, Math.min(30, 1600 / text.length));
+      const iv = setInterval(() => {
+        bubble.textContent = text.slice(0, i++);
+        log.scrollTop = log.scrollHeight;
+        if (i > text.length) { clearInterval(iv); bubble.classList.remove('typing-cursor'); }
+      }, spd);
+    }
+
+    function appendTypingIndicator() {
+      const log = document.getElementById('chat-log');
+      const div = document.createElement('div');
+      div.id = 'typing-ind'; div.className = 'chat-msg';
+      div.innerHTML = `<span class="chat-role jarvis">JARVIS</span><span class="chat-bubble typing-cursor" style="color:var(--text3)">Processing</span>`;
+      log.appendChild(div); log.scrollTop = log.scrollHeight;
+    }
+    function removeTypingIndicator() {
+      const el = document.getElementById('typing-ind');
+      if (el) el.remove();
+    }
+
+    async function fetchStats() {
+      try {
+        const r = await fetch(`${API_URL}/system/stats`);
+        if (!r.ok) return;
+        const d = await r.json();
+        applyStats(d);
+      } catch (e) { }
+    }
+
+    function handleStatsPush(d) {
+      if (d.cpu !== undefined) applyCpu(d.cpu);
+      if (d.ram !== undefined) applyRam(d.ram);
+    }
+
+    function applyStats(d) {
+      applyCpu(d.cpu_percent);
+      applyRam(d.ram_percent, d.ram_used_gb, d.ram_total_gb);
+      applyDisk(d.disk_percent, d.disk_free_gb);
+      applyNet(d.net_bytes_sent, d.net_bytes_recv);
+    }
+
+    function applyCpu(pct) {
+      const p = Math.round(pct);
+      document.getElementById('hdr-cpu').textContent = p + '%';
+      document.getElementById('card-cpu').textContent = p + '%';
+      document.getElementById('st-cpu').textContent = p + '%';
+      const fill = document.getElementById('bar-cpu');
+      const sfill = document.getElementById('stbar-cpu');
+      fill.style.width = p + '%';
+      sfill.style.width = p + '%';
+      const cls = p > 85 ? 'danger' : p > 65 ? 'warn' : '';
+      fill.className = 'hud-bar-fill ' + cls;
+      sfill.className = 'stat-bar ' + cls;
+    }
+
+    function applyRam(pct, usedGb, totalGb) {
+      const p = Math.round(pct);
+      document.getElementById('hdr-ram').textContent = p + '%';
+      document.getElementById('card-ram').textContent = p + '%';
+      document.getElementById('st-ram').textContent = p + '%';
+      if (usedGb !== undefined) {
+        document.getElementById('card-ram-sub').textContent = `${usedGb}GB used`;
+        document.getElementById('st-ram-detail').textContent = `${usedGb} / ${totalGb} GB`;
+      }
+      const fill = document.getElementById('bar-ram');
+      const sfill = document.getElementById('stbar-ram');
+      fill.style.width = p + '%'; sfill.style.width = p + '%';
+      const cls = p > 85 ? 'danger' : p > 70 ? 'warn' : '';
+      fill.className = 'hud-bar-fill ' + cls;
+      sfill.className = 'stat-bar ' + cls;
+    }
+
+    function applyDisk(pct, freeGb) {
+      const p = Math.round(pct);
+      document.getElementById('card-disk').textContent = p + '%';
+      document.getElementById('st-disk').textContent = p + '%';
+      if (freeGb !== undefined)
+        document.getElementById('st-disk-free').textContent = freeGb + ' GB free';
+      document.getElementById('card-disk-sub').textContent = freeGb ? `${freeGb}GB free` : 'C:\\ drive';
+      const fill = document.getElementById('bar-disk');
+      const sfill = document.getElementById('stbar-disk');
+      fill.style.width = p + '%'; sfill.style.width = p + '%';
+      const cls = p > 90 ? 'danger' : p > 75 ? 'warn' : '';
+      fill.className = 'hud-bar-fill ' + cls;
+      sfill.className = 'stat-bar ' + cls;
+    }
+
+    function applyNet(sent, recv) {
+      const sentKB = ((sent - lastNetSent) / 1024).toFixed(1);
+      const recvKB = ((recv - lastNetRecv) / 1024).toFixed(1);
+      if (lastNetSent > 0) {
+        document.getElementById('np-net').textContent = `↑${sentKB} ↓${recvKB} KB/s`;
+        document.getElementById('st-net-sent').textContent = fmtBytes(sent);
+        document.getElementById('st-net-recv').textContent = fmtBytes(recv);
+        document.getElementById('card-net') && (document.getElementById('card-net').textContent = `↓${recvKB}KB`);
+      }
+      lastNetSent = sent; lastNetRecv = recv;
+    }
+
+    async function fetchHealth() {
+      try {
+        const r = await fetch(`${API_URL}/health`);
+        if (!r.ok) return;
+        const d = await r.json();
+        document.getElementById('st-backend').textContent = d.llm_available ? 'ACTIVE' : 'OFFLINE';
+        document.getElementById('st-llm-status').textContent = d.authenticated ? 'AUTHENTICATED' : 'LOCKED';
+        document.getElementById('backend-badge').textContent = d.llm_available ? 'GEMINI' : 'OFFLINE';
+      } catch (e) { }
+      setTimeout(fetchHealth, 10000);
+    }
+
+    async function fetchTasks() {
+      try {
+        const r = await fetch(`${API_URL}/tasks`);
+        if (!r.ok) return;
+        const d = await r.json();
+        tasks = d.tasks;
+        renderTasks();
+      } catch (e) { }
+    }
+
+    function renderTasks() {
+      const list = document.getElementById('task-list');
+      if (!tasks || tasks.length === 0) {
+        list.innerHTML = '<div id="tasks-empty">NO PENDING TASKS</div>';
+        return;
+      }
+      list.innerHTML = tasks.map(t => `
+    <div class="task-item" id="task-${t.id}">
+      <div class="task-check ${t.status === 'done' ? 'done' : ''}" onclick="toggleTask(${t.id})">
+        ${t.status === 'done' ? '✓' : ''}
+      </div>
+      <span class="task-title ${t.status === 'done' ? 'done' : ''}">${esc(t.title)}</span>
+      <span class="task-del" onclick="deleteTask(${t.id})">✕</span>
+    </div>
+  `).join('');
+    }
+
+    async function addTaskFromUI() {
+      const inp = document.getElementById('task-input');
+      const title = inp.value.trim();
+      if (!title) return;
+      inp.value = '';
+      try {
+        await fetch(`${API_URL}/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        });
+        showToast('Task added, Sir.');
+        await fetchTasks();
+      } catch (e) { }
+    }
+
+    async function toggleTask(id) {
+      try {
+        await fetch(`${API_URL}/tasks/${id}/complete`, { method: 'PATCH' });
+        await fetchTasks();
+      } catch (e) { }
+    }
+
+    async function deleteTask(id) {
+      const el = document.getElementById('task-' + id);
+      if (el) el.remove();
+      tasks = tasks.filter(t => t.id !== id);
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && document.activeElement === document.getElementById('task-input')) {
+        addTaskFromUI();
+      }
+    });
+
+    async function fetchAuditLog() {
+      try {
+        const r = await fetch(`${API_URL}/audit?limit=40`);
+        if (!r.ok) return;
+        const d = await r.json();
+        renderAudit(d.log);
+      } catch (e) { }
+    }
+
+    function renderAudit(log) {
+      const panel = document.getElementById('audit-panel');
+      if (!log || log.length === 0) {
+        panel.innerHTML = '<div style="color:var(--text3);font-size:11px;font-family:Share Tech Mono,monospace;padding:16px;letter-spacing:1px;">NO LOG ENTRIES YET</div>';
+        return;
+      }
+      panel.innerHTML = log.map(e => {
+        const ts = e.timestamp ? e.timestamp.slice(11, 19) : '--:--:--';
+        return `<div class="audit-item">
+      <span class="audit-time">${ts}</span>
+      <span class="audit-action">${esc(e.action_type || '')}</span>
+      <span class="audit-cmd">${esc(e.command || '—')}</span>
+      <span class="${e.success ? 'audit-ok' : 'audit-err'}">${e.success ? 'OK' : 'ERR'}</span>
+    </div>`;
+      }).join('');
+    }
+
+    function initWaveform() {
+      const cv = document.getElementById('waveform-canvas');
+      const ctx = cv.getContext('2d');
+      const W = cv.width, H = cv.height, cx = W / 2, cy = H / 2;
+      let pulse = false;
+      let angle = 0;
+
+      // Build the fractal tree ONCE with fixed randomness, so every frame
+      // just rotates the same stable structure — this avoids the flickery
+      // "noise" look of regenerating random branches per frame.
+      const segments = [];
+      function branch(x, y, a, length, depth, maxDepth) {
+        if (depth > maxDepth || length < 3) return;
+        const x2 = x + Math.cos(a) * length;
+        const y2 = y + Math.sin(a) * length;
+        segments.push({ x1: x, y1: y, x2, y2, depth, maxDepth });
+        const count = depth === 0 ? 2 : (Math.random() < 0.7 ? 2 : 1);
+        for (let i = 0; i < count; i++) {
+          const dir = i === 0 ? 1 : -1;
+          const newA = a + dir * (0.35 + Math.random() * 0.35);
+          branch(x2, y2, newA, length * (0.66 + Math.random() * 0.1), depth + 1, maxDepth);
+        }
+      }
+      const MAIN_BRANCHES = 11;
+      for (let i = 0; i < MAIN_BRANCHES; i++) {
+        const a = (i / MAIN_BRANCHES) * Math.PI * 2 + Math.random() * 0.2;
+        branch(0, 0, a, 24 + Math.random() * 6, 0, 4);
+      }
+
+      function frame() {
+        ctx.clearRect(0, 0, W, H);
+        angle += pulse ? 0.012 : 0.004;
+        const cosA = Math.cos(angle), sinA = Math.sin(angle);
+
+        segments.forEach(s => {
+          const x1 = cx + (s.x1 * cosA - s.y1 * sinA);
+          const y1 = cy + (s.x1 * sinA + s.y1 * cosA);
+          const x2 = cx + (s.x2 * cosA - s.y2 * sinA);
+          const y2 = cy + (s.x2 * sinA + s.y2 * cosA);
+          const t = s.depth / s.maxDepth;
+          const op = pulse ? (0.35 + t * 0.5) : (0.18 + t * 0.35);
+
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(190,255,90,${op})`;
+          ctx.lineWidth = Math.max(0.5, (s.maxDepth - s.depth) * 0.5) * (pulse ? 1.3 : 1);
+          ctx.stroke();
+
+          if (s.depth === s.maxDepth) {
+            ctx.beginPath();
+            ctx.arc(x2, y2, pulse ? 1.6 : 1, 0, Math.PI * 2);
+            ctx.fillStyle = `rgba(210,255,140,${Math.min(1, op + 0.25)})`;
+            ctx.shadowBlur = pulse ? 5 : 2;
+            ctx.shadowColor = '#c8ff5a';
+            ctx.fill();
+            ctx.shadowBlur = 0;
+          }
+        });
+
+        // Core glow
+        const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 70);
+        g.addColorStop(0, pulse ? 'rgba(200,255,90,0.20)' : 'rgba(200,255,90,0.10)');
+        g.addColorStop(1, 'rgba(20,40,0,0)');
+        ctx.beginPath(); ctx.arc(cx, cy, 70, 0, Math.PI * 2);
+        ctx.fillStyle = g; ctx.fill();
+
+        // Rotating dashed ring frame
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(-angle * 0.4);
+        ctx.setLineDash([2, 7]);
+        ctx.beginPath();
+        ctx.arc(0, 0, 88, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(200,255,90,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+
+        requestAnimationFrame(frame);
+      }
+      requestAnimationFrame(frame);
+      window.startPulse = () => pulse = true;
+      window.stopPulse = () => pulse = false;
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t =>
+        t.classList.toggle('active', t.textContent.toLowerCase() === name));
+      document.querySelectorAll('.panel').forEach(p =>
+        p.classList.toggle('active', p.id === 'panel-' + name));
+      if (name === 'audit') fetchAuditLog();
+      if (name === 'stats') fetchStats();
+      if (name === 'tasks') fetchTasks();
+    }
+
+    function setStatus(s) {
+      const map = {
+        'STANDBY': 'AWAITING VOICE COMMAND...',
+        'ONLINE': 'AWAITING VOICE COMMAND...',
+        'LISTENING': 'LISTENING...',
+        'PROCESSING': 'PROCESSING...',
+        'RECONNECTING': 'RECONNECTING...',
+        'ENGINE OFFLINE': 'ENGINE OFFLINE',
+      };
+      document.getElementById('viz-status').textContent = map[s] || s;
+    }
+
+    let toastTimer = null;
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    function openSettings() {
+      document.getElementById('set-api').value = API_URL;
+      document.getElementById('settings-overlay').classList.add('open');
+    }
+    function closeSettings() {
+      document.getElementById('settings-overlay').classList.remove('open');
+    }
+    function saveSettings() {
+      const api = document.getElementById('set-api').value.trim();
+      if (api) {
+        API_URL = api; WS_URL = api.replace('http', 'ws') + '/ws';
+        localStorage.setItem('jarvis_api', api);
+      }
+      showToast('Settings saved, Sir.');
+      closeSettings();
+      connectWS();
+    }
+
+    function hideWindow() {
+      if (window.jarvis) window.jarvis.hide();
+      else window.close();
+    }
+    function minimizeWindow() {
+      if (window.jarvis) window.jarvis.minimize();
+    }
+    function maximizeWindow() {
+      if (window.jarvis) window.jarvis.maximize();
+    }
+
+    function toggleInputMode() {
+      const micWrap = document.getElementById('mic-primary-wrap');
+      const inputWrap = document.getElementById('cmd-input-wrap');
+      const sendBtn = document.getElementById('send-btn');
+      const kbBtn = document.getElementById('keyboard-toggle-btn');
+      const isOpen = inputWrap.classList.contains('open');
+
+      if (isOpen) {
+        inputWrap.classList.remove('open');
+        sendBtn.style.display = 'none';
+        micWrap.classList.remove('hidden');
+        kbBtn.classList.remove('active');
+      } else {
+        inputWrap.classList.add('open');
+        sendBtn.style.display = 'flex';
+        micWrap.classList.add('hidden');
+        kbBtn.classList.add('active');
+        document.getElementById('cmd-input').focus();
+      }
+    }
+
+    function bindInput() {
+      const inp = document.getElementById('cmd-input');
+      document.getElementById('send-btn').addEventListener('click', () => sendCommand(inp.value));
+      inp.addEventListener('keydown', e => { if (e.key === 'Enter') sendCommand(inp.value); });
+      document.getElementById('keyboard-toggle-btn').addEventListener('click', toggleInputMode);
+
+      // Voice input is handled entirely by the background wake-word loop
+      // running in the Python core ("Hey JARVIS") — there is intentionally
+      // no manual mic trigger in the GUI anymore. A second, GUI-triggered
+      // listen attempt would collide with the always-on background loop
+      // trying to use the same microphone at the same time.
+
+      if (window.jarvis) {
+        window.jarvis.onWindowShown(() => {
+          const s = document.getElementById('shell');
+          s.classList.add('glitch');
+          setTimeout(() => s.classList.remove('glitch'), 400);
+        });
+      }
+    }
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function nowTs() {
+      const n = new Date();
+      return `${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+    }
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+    function fmtBytes(b) {
+      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+      if (b > 1e6) return (b / 1e6).toFixed(1) + ' MB';
+      return (b / 1e3).toFixed(0) + ' KB';
+    }
+
+    window.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+
+</html>
