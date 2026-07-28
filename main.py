@@ -186,7 +186,7 @@ def main():
     parser.add_argument("--no-api", action="store_true", help="Skip API server (no Electron GUI)")
     args = parser.parse_args()
 
-    # First-time setup
+    
     if args.setup:
         run_setup_wizard()
         return
