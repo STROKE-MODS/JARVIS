@@ -11,6 +11,7 @@ import threading
 import comtypes
 import glob
 import os
+from typing import Optional
 import subprocess
 import psutil
 import pyautogui
@@ -498,7 +499,7 @@ def focus_window(app_name: str) -> str:
     return f"No window found for '{app_name}', Sir. Is it open?"
 
 
-def minimize_window(app_name: str = None) -> str:
+def minimize_window(app_name: Optional[str] = None) -> str:
     if app_name:
         hwnd = find_hwnd(app_name)
         if hwnd:
@@ -514,7 +515,7 @@ def minimize_window(app_name: str = None) -> str:
     return "Window minimized, Sir."
 
 
-def maximize_window(app_name: str = None) -> str:
+def maximize_window(app_name: Optional[str] = None) -> str:
     if app_name:
         hwnd = find_hwnd(app_name)
         if hwnd:
@@ -529,7 +530,7 @@ def maximize_window(app_name: str = None) -> str:
     pyautogui.hotkey('win', 'up')
     return "Window maximized, Sir."
 
-def close_window(app_name: str = None) -> str:
+def close_window(app_name: Optional[str] = None) -> str:
     """Close a window."""
     if app_name:
         window = find_window(app_name)
@@ -555,14 +556,14 @@ def list_open_windows() -> str:
     return f"Open windows, Sir: {', '.join(titles[:8])}."
 
 
-def snap_window_left(app_name: str = None) -> str:
+def snap_window_left(app_name: Optional[str] = None) -> str:
     if app_name:
         focus_window(app_name)
         import time; time.sleep(0.4)
     pyautogui.hotkey('win', 'left')
     return f"Snapped {app_name or 'window'} to left, Sir."
 
-def snap_window_right(app_name: str = None) -> str:
+def snap_window_right(app_name: Optional[str] = None) -> str:
     if app_name:
         focus_window(app_name)
         import time; time.sleep(0.4)

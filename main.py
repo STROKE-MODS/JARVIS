@@ -198,7 +198,6 @@ def main():
     # Start API server (for Electron GUI)
     if not args.no_api:
         start_api_server(engine)
-
     # Start hotkey listener
     start_hotkey_listener(engine)
 
@@ -226,7 +225,6 @@ def main():
                 print(f"\n{Fore.CYAN}[JARVIS] Shutting down. Goodbye, Sir.{Style.RESET_ALL}")
         else:
             print(f"{Fore.RED}[JARVIS] Startup failed. Exiting.{Style.RESET_ALL}")
-
 
 if __name__ == "__main__":
     main()
