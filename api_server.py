@@ -266,9 +266,7 @@ def _broadcast_voice_status(status: str):
     """Called from background threads (not the main event loop), so we
     schedule the actual async broadcast onto the main loop safely instead
     of trying to await it directly from a plain thread."""
-    print(f"[DEBUG] _broadcast_voice_status called with status={status}, main_loop={_main_loop}")
     if _main_loop is None:
-        print("[DEBUG] _main_loop is None — broadcast skipped!")
         return
     asyncio.run_coroutine_threadsafe(
         broadcast({"type": "voice_status", "status": status}),

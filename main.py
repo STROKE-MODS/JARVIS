@@ -175,11 +175,12 @@ def start_hotkey_listener(engine):
         _ptt_thread_running = threading.Event()
 
         def _on_f7_press(event):
+            if _f7_held.is_set():
+                return  # OS key-repeat firing while held — ignore, already active
             if _ptt_thread_running.is_set():
-                return  # already listening from a previous press, ignore repeats
+                return
             _f7_held.set()
             _ptt_thread_running.set()
-
             def _run():
                 engine._on_push_to_talk(lambda: _f7_held.is_set())
                 _ptt_thread_running.clear()

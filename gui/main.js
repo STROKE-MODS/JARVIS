@@ -121,12 +121,14 @@ function connectVoiceStatusSocket() {
     voiceWs.on('message', (data) => {
       try {
         const msg = JSON.parse(data.toString());
+        console.log('[POPUP DEBUG] Received message:', msg);
         if (msg.type === 'voice_status') {
+          console.log('[POPUP DEBUG] voice_status =', msg.status, '— calling', msg.status === 'listening' ? 'showPopup' : 'hidePopup');
           if (msg.status === 'listening') showPopup();
           else hidePopup();
         }
       } catch (e) {
-        // ignore malformed messages
+        console.log('[POPUP DEBUG] Failed to parse message:', data.toString(), e);
       }
     });
 
@@ -192,6 +194,7 @@ app.whenReady().then(() => {
   createTray();
   createPopupWindow();
   connectVoiceStatusSocket();
+
 
   // Ctrl+Space global hotkey
   const ok = globalShortcut.register('CommandOrControl+Space', toggleWindow);
