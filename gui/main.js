@@ -5,9 +5,12 @@
 
 const { app, BrowserWindow, globalShortcut, Tray, Menu, nativeImage, ipcMain, screen } = require('electron');
 const path = require('path');
+const WebSocket = require('ws');
 
 let mainWindow = null;
 let tray = null;
+let popupWindow = null;
+let voiceWs = null;
 
 // ─── Window ───────────────────────────────────────────────────────────────────
 
@@ -73,6 +76,72 @@ function createTray() {
   tray.on('click', toggleWindow);
 }
 
+// ADD this new function:
+function createPopupWindow() {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize;
+
+  popupWindow = new BrowserWindow({
+    width: 260,
+    height: 60,
+    x: width - 280,
+    y: height - 100,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    skipTaskbar: true,
+    focusable: false,   // never steals focus from whatever you're doing
+    show: false,         // hidden until a 'listening' broadcast arrives
+    webPreferences: {
+      contextIsolation: true,
+      nodeIntegration: false,
+    },
+  });
+
+  popupWindow.loadFile(path.join(__dirname, 'popup.html'));
+  popupWindow.setAlwaysOnTop(true, 'screen-saver'); // stays above nearly everything
+}
+
+function showPopup() {
+  if (popupWindow) popupWindow.showInactive(); // show without stealing focus
+}
+
+function hidePopup() {
+  if (popupWindow) popupWindow.hide();
+}
+// ADD this new function:
+function connectVoiceStatusSocket() {
+  try {
+    voiceWs = new WebSocket('ws://127.0.0.1:8765/ws');
+
+    voiceWs.on('open', () => {
+      console.log('[POPUP] Connected to JARVIS voice status socket.');
+    });
+
+    voiceWs.on('message', (data) => {
+      try {
+        const msg = JSON.parse(data.toString());
+        if (msg.type === 'voice_status') {
+          if (msg.status === 'listening') showPopup();
+          else hidePopup();
+        }
+      } catch (e) {
+        // ignore malformed messages
+      }
+    });
+
+    voiceWs.on('close', () => {
+      console.log('[POPUP] Voice status socket closed — retrying in 3s...');
+      setTimeout(connectVoiceStatusSocket, 3000);
+    });
+
+    voiceWs.on('error', () => {
+      // swallow — 'close' handler above will trigger the retry
+    });
+  } catch (e) {
+    setTimeout(connectVoiceStatusSocket, 3000);
+  }
+}
 function sendTab(name) {
   if (mainWindow) mainWindow.webContents.send('switch-tab', name);
 }
@@ -121,6 +190,8 @@ ipcMain.handle('get-ws-url', () => 'ws://127.0.0.1:8765/ws');
 app.whenReady().then(() => {
   createWindow();
   createTray();
+  createPopupWindow();
+  connectVoiceStatusSocket();
 
   // Ctrl+Space global hotkey
   const ok = globalShortcut.register('CommandOrControl+Space', toggleWindow);
@@ -128,6 +199,7 @@ app.whenReady().then(() => {
   else console.log('[JARVIS] Ctrl+Space hotkey registered ✓');
 
   console.log('[JARVIS] Electron GUI ready. Window: 680x760, bottom-right corner.');
+  console.log('[JARVIS] Listening popup ready — will appear bottom-right when JARVIS is listening.');
 });
 
 app.on('will-quit', () => globalShortcut.unregisterAll());

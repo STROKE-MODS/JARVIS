@@ -279,6 +279,18 @@
 
   <div id="toast"></div>
 
+  <div id="listening-overlay" style="position:absolute;inset:0;background:rgba(3,8,5,0.92);z-index:400;display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;">
+    <div id="listening-pulse" style="width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,rgba(200,255,90,0.4),transparent 70%);animation:listen-pulse 1.2s ease-in-out infinite;"></div>
+    <div style="font-family:'Orbitron',monospace;font-size:16px;color:var(--primary);letter-spacing:3px;text-shadow:var(--glow);">LISTENING...</div>
+    <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--text3);letter-spacing:1px;">Speak your command, Sir</div>
+  </div>
+  <style>
+    @keyframes listen-pulse {
+      0%, 100% { transform: scale(1); opacity: 0.6; }
+      50% { transform: scale(1.4); opacity: 1; }
+    }
+  </style><div id="toast"></div>
+
   <div id="settings-overlay">
     <div id="settings-title">⚙ SETTINGS</div>
     <div class="setting-row">
@@ -579,6 +591,10 @@
           const d = JSON.parse(e.data);
           if (d.type === 'stats') handleStatsPush(d);
           else if (d.type === 'notification') showToast(d.message);
+          else if (d.type === 'voice_status') {
+            if (d.status === 'listening') showListeningOverlay();
+            else hideListeningOverlay();
+          }
         };
         ws.onclose = () => {
           setStatus('RECONNECTING');
@@ -978,7 +994,28 @@
     function maximizeWindow() {
       if (window.jarvis) window.jarvis.maximize();
     }
+    // Websocket handler
+    async function triggerVoiceListen() {
+      try {
+        await fetch(`${API_URL}/command`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: '__voice_trigger__', source: 'button' })
+        });
+      } catch (e) {
+        showToast('Cannot reach JARVIS engine, Sir.');
+      }
+    }
 
+    function showListeningOverlay() {
+      document.getElementById('listening-overlay').style.display = 'flex';
+      setStatus('LISTENING');
+    }
+
+    function hideListeningOverlay() {
+      document.getElementById('listening-overlay').style.display = 'none';
+      setStatus('STANDBY');
+    }
     function toggleInputMode() {
       const micWrap = document.getElementById('mic-primary-wrap');
       const inputWrap = document.getElementById('cmd-input-wrap');
@@ -1004,7 +1041,7 @@
       const inp = document.getElementById('cmd-input');
       document.getElementById('send-btn').addEventListener('click', () => sendCommand(inp.value));
       inp.addEventListener('keydown', e => { if (e.key === 'Enter') sendCommand(inp.value); });
-      document.getElementById('keyboard-toggle-btn').addEventListener('click', toggleInputMode);
+      document.getElementById('keyboard-toggle-btn').addEventListener('click', triggerVoiceListen);
 
       // Voice input is handled entirely by the background wake-word loop
       // running in the Python core ("Hey JARVIS") — there is intentionally

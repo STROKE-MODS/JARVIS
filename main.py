@@ -151,28 +151,52 @@ def start_api_server(engine):
 
 def start_hotkey_listener(engine):
     """
-    Listen for Ctrl+Space to trigger JARVIS popup / voice activation.
+    Listen for Ctrl+Space (toggle activation) AND F7 (push-to-talk, hold
+    to speak) globally, regardless of which window has focus.
     Runs in background thread.
     """
     try:
         import keyboard
+        import threading
 
-        def on_hotkey():
+        def on_ctrl_space():
             if engine.auth.is_authenticated():
                 print("\n[HOTKEY] Ctrl+Space detected — activating JARVIS...")
-                engine._on_wake_word_detected() 
+                engine._on_wake_word_detected()
             else:
                 print("[HOTKEY] JARVIS locked. Triggering authentication...")
                 engine.auth.authenticate()
 
-        keyboard.add_hotkey("ctrl+space", on_hotkey)
+        keyboard.add_hotkey("ctrl+space", on_ctrl_space)
         print("[HOTKEY] Ctrl+Space listener active.")
+
+        # ── F7 push-to-talk: hold to speak, release to process ──────────
+        _f7_held = threading.Event()
+        _ptt_thread_running = threading.Event()
+
+        def _on_f7_press(event):
+            if _ptt_thread_running.is_set():
+                return  # already listening from a previous press, ignore repeats
+            _f7_held.set()
+            _ptt_thread_running.set()
+
+            def _run():
+                engine._on_push_to_talk(lambda: _f7_held.is_set())
+                _ptt_thread_running.clear()
+
+            threading.Thread(target=_run, daemon=True).start()
+
+        def _on_f7_release(event):
+            _f7_held.clear()
+
+        keyboard.on_press_key("f7", _on_f7_press, suppress=False)
+        keyboard.on_release_key("f7", _on_f7_release, suppress=False)
+        print("[HOTKEY] F7 push-to-talk active — hold F7 to speak, release to send.")
 
     except ImportError:
         print("[HOTKEY] 'keyboard' library not installed. Install with: pip install keyboard")
     except Exception as e:
         print(f"[HOTKEY] Failed to register hotkey: {e}")
-
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 

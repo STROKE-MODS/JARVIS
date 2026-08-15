@@ -34,7 +34,12 @@ app.add_middleware(
 # ─── Global JARVIS engine reference (set by main.py) ──────────────────────────
 jarvis_engine = None
 connected_clients: list[WebSocket] = []
+_main_loop = None  
 
+@app.on_event("startup")
+async def _capture_loop():
+    global _main_loop
+    _main_loop = asyncio.get_event_loop()
 
 def set_engine(engine):
     global jarvis_engine
@@ -92,11 +97,16 @@ async def process_command(req: CommandRequest):
     # it has finished listening and processing, so nothing further is
     # needed here.
     if req.text == "__voice_trigger__":
-        threading.Thread(
-            target=jarvis_engine._on_wake_word_detected,
-            daemon=True
-        ).start()
+        def _run_and_broadcast():
+            _broadcast_voice_status("listening")
+            try:
+                jarvis_engine._on_wake_word_detected()
+            finally:
+                _broadcast_voice_status("idle")
+
+        threading.Thread(target=_run_and_broadcast, daemon=True).start()
         return {"response": "__listening__", "timestamp": datetime.now().isoformat()}
+        
 
     try:
         response = await jarvis_engine.process_command_async(req.text)
@@ -252,7 +262,18 @@ async def broadcast(message: dict):
     for c in disconnected:
         if c in connected_clients:
             connected_clients.remove(c)
-
+def _broadcast_voice_status(status: str):
+    """Called from background threads (not the main event loop), so we
+    schedule the actual async broadcast onto the main loop safely instead
+    of trying to await it directly from a plain thread."""
+    print(f"[DEBUG] _broadcast_voice_status called with status={status}, main_loop={_main_loop}")
+    if _main_loop is None:
+        print("[DEBUG] _main_loop is None — broadcast skipped!")
+        return
+    asyncio.run_coroutine_threadsafe(
+        broadcast({"type": "voice_status", "status": status}),
+        _main_loop
+    )
 
 # ─── Notification endpoint ────────────────────────────────────────────────────
 
